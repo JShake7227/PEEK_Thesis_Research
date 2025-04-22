@@ -1,0 +1,90 @@
+
+import "oplsaa2024.lt"
+
+OPLSAA {
+write_once(" In Charges"){
+        set type @atom:177R charge -0.170 # O  - OS   | diphenyl ether OPLS/2020
+        set type @atom:145R charge -0.115 # C  - CA   | Benzene C - 12 site OPLS/2020
+}
+
+write_once("Data Masses") {
+        @atom:177R 15.9994
+        @atom:145R 12.011
+}
+    
+# ---------- EQUIVALENCE CATEGORIES for bonded interaction lookup ----------
+  #   Each type of atom has a separate ID used for looking up bond parameters
+  #   and a separate ID for looking up 3-body angle interaction parameters
+  #   and a separate ID for looking up 4-body dihedral interaction parameters
+  #   and a separate ID for looking up 4-body improper interaction parameters
+  #   The complete @atom type name includes ALL of these ID numbers.  There's
+  #   no need to force the end-user to type the complete name of each atom.
+  #   The "replace" command used below informs moltemplate that the short
+  #   @atom names we have been using above are equivalent to the complete
+  #   @atom names used below:
+
+    replace{ @atom:177R @atom:177R_bOS_aOS_dOS_iOS }
+    replace{ @atom:145R @atom:145R_bCA_aCA_dCA_iCA }
+     
+# ------- Bonded Interactions: -------
+  # http://lammps.sandia.gov/doc/bond_harmonic.html
+  # Syntax:  
+  # bond_coeff BondTypeName BondStyle  parameters...
+
+  write_once("In Settings") {
+    bond_coeff @bond:c11o11 450. 1.364
+    bond_coeff @bond:c4344 469. 1.40
+    bond_coeff @bond:c4445 469. 1.40
+  }
+  write_once("Data Bonds By Type") {
+    @bond:c11o11 @atom:*_bCA_a*_d*_i* @atom:*_bOSR_a*_d*_i*
+    @bond:c4344 @atom:*_bCA_a*_d*_i* @atom:*_bCAR_a*_d*_i*
+    @bond:c4445 @atom:*_bCAR_a*_d*_i* @atom:*_bCA_a*_d*_i*
+  }
+
+# ------- Angle Interactions -------
+  # http://lammps.sandia.gov/doc/angle_harmonic.html
+  # Syntax:  
+  # angle_coeff AngleTypeName  AngleStyle  parameters...
+
+  #write_once("In Settings") {
+    #angle_coeff @angle: 
+
+  #} #(end of angle_coeffs)
+
+  # Rules for creating angle interactions according to atom type:
+  #   AngleTypeName     AtomType1            AtomType2            AtomType3
+  #   (* = wildcard)
+
+  write_once("Data Angles By Type") {
+    @angle:CT_CT_CT @atom:*_b*_a[]_d*_i* @atom:*_b*_a[]_d*_i* @atom:*_b*_a[]_d*_i*
+  } #(end of angles by type)
+
+# --------------- Non-Bonded interactions: ---------------------
+  # https://docs.lammps.org/pair_lj_cut_coul.html
+  # Syntax:
+  # pair_coeff    AtomType1    AtomType2   parameters...
+
+    write_once("In Settings"){
+        pair_coeff @atom:177R @atom:177R 0.170 3.000
+        pair_coeff @atom:145R @atom:145R 0.066 3.500
+    }
+
+# ----------- Dihedral Interactions: ------------
+  # https://docs.lammps.org/dihedral_opls.html
+  # Syntax:
+  # dihedral_coeff DihedralTypeName  parameters...
+    write_once("In Settings"){ 
+        dihedral_coeff @dihedral:CA_CAR_OSR_CA 3.25 2.16 1.28 0.36
+        dihedral_coeff @dihedral:CA_CA_C~_CA 0.0 0.2 0.0 0.0
+    }
+
+  # Rules for creating dihedral interactions according to atom type:
+  #   DihedralTypeName     AtomType1     AtomType2     AtomType3     AtomType4
+  #   (* = wildcard)
+
+  write_once("Data Dihedrals By Type") {
+    @dihedral:CA_CAR_OSR_CA @atom:*_b*_a*_dCA*_i* @atom:*_b*_a*_dCAR*_i* @atom:*_b*_a*_dOSR*_i* @atom:*_b*_a*_dCA*_i*
+    @dihedral:CA_CA_C~_CA @atom:*_b*_a*_dCA*_i* @atom:*_b*_a*_dCA*_i*  @atom:*_b*_a*_dC~_i*  @atom:*_b*_a*_dCA*_i*
+  }
+}

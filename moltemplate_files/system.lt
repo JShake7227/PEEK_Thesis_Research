@@ -1,0 +1,16 @@
+import "monomer_reactive_distinct.lt"
+import "oplsaa2024.lt"
+
+# Periodic boundary conditions:
+write_once("Data Boundary") {
+   0  100  xlo xhi
+   0  100  ylo yhi
+   0  100 zlo zhi
+}
+
+create_var {$mol} #Force monomers to have same molecule-ID
+
+monomers = new PEEK [1].move(20,0,0)
+                    [2].move(0,20,0)
+                    [5].move(0,0,20)
+                    .move(50,40,10) #.move(10,10,10)

@@ -1,0 +1,86 @@
+
+#import "oplsaa2024.lt"
+import "force_field_variant.lt" 
+
+#Need to find out how to copy all parameters between standard ester oxygen and carbons and replicate for custom atom type
+#Repeat for reactive carbon
+
+PEEK inherits OPLSAA {
+  create_var {$mol} # Force all monomers to share the same molecule-ID
+
+  write("Data Atoms") {
+    $atom:c11 $mol @atom:145 0.0 -6.354 0.347 -0.027 #1_ester_benzene
+    $atom:c12 $mol @atom:145 0.0 -6.172 1.723 0.175
+    $atom:c13 $mol @atom:145 0.0 -4.906 2.333 0.186
+    $atom:c14 $mol @atom:145 0.0 -3.739 1.588 -0.023
+    $atom:c15 $mol @atom:145 0.0 -3.888 0.231 -0.288
+    $atom:c16 $mol @atom:145 0.0 -5.166 -0.366 -0.26
+    $atom:h12 $mol @atom:146 0.0 -7.053 2.345 0.33
+    $atom:h13 $mol @atom:146 0.0 -4.86 3.405 0.33
+    $atom:h15 $mol @atom:146 0.0 -3.062 -0.415 -0.546
+    $atom:h16 $mol @atom:146 0.0 -5.249 -1.438 -0.44
+    $atom:o11 $mol @atom:177R 0.0 -7.499 -0.208 -0.012 #Reactive Oxygen – O_react (177)
+    $atom:c21 $mol @atom:280 0.0 -2.441 2.335 0.009 #2_Ketone
+    $atom:o21 $mol @atom:281 0.0 -2.493 3.574 0.03
+    $atom:c31 $mol @atom:145 0.0 -0.737 0.463 0.43 #3_ester_benzene"
+    $atom:c32 $mol @atom:145 0.0 -1.067 1.752 0.013
+    $atom:c33 $mol @atom:145 0.0 -0.004 2.593 -0.386
+    $atom:c34 $mol @atom:145 0.0 1.33 2.156 -0.413
+    $atom:c35 $mol @atom:145 0.0 1.652 0.877 0.006
+    $atom:c36 $mol @atom:145 0.0 0.6 0.033 0.404
+    $atom:h31 $mol @atom:146 0.0 -1.484 -0.23 0.807
+    $atom:h33 $mol @atom:146 0.0 -0.227 3.618 -0.688
+    $atom:h34 $mol @atom:146 0.0 2.07 2.848 -0.796
+    $atom:h36 $mol @atom:146 0.0 0.828 -0.994 0.699
+    $atom:o31 $mol @atom:177 0.0 2.87 0.259 0.01
+    $atom:c41 $mol @atom:145 0.0 4.106 0.841 0.017 #4_non_terminal_benzene
+    $atom:c42 $mol @atom:145 0.0 4.453 2.169 0.234
+    $atom:c43 $mol @atom:145 0.0 5.8 2.565 0.204
+    $atom:c44 $mol @atom:145R 0.0 6.815 1.627 0.014 #Reactive Carbon – C_react (145)
+    $atom:c45 $mol @atom:145 0.0 6.484 0.286 -0.148
+    $atom:c46 $mol @atom:145 0.0 5.14 -0.096 -0.154
+    $atom:h42 $mol @atom:146 0.0 3.721 2.932 0.453
+    $atom:h43 $mol @atom:146 0.0 6.064 3.611 0.345
+    $atom:h45 $mol @atom:146 0.0 7.265 -0.465 -0.267
+    $atom:h46 $mol @atom:146 0.0 4.892 -1.149 -0.278
+  }
+
+  write("Data Bond List") {
+    $bond:c12  $atom:c11 $atom:c12
+    $bond:c23  $atom:c12 $atom:c13
+    $bond:c34  $atom:c13 $atom:c14
+    $bond:c45  $atom:c14 $atom:c15
+    $bond:c56  $atom:c15 $atom:c16
+    $bond:c61  $atom:c16 $atom:c11
+    $bond:c11o11 $atom:c11 $atom:o11 #177R
+    $bond:c2h1 $atom:c12 $atom:h12
+    $bond:c3h3 $atom:c13 $atom:h13
+    $bond:c5h5 $atom:c15 $atom:h15
+    $bond:c6h6 $atom:c16 $atom:h16
+    $bond:c21o21 $atom:c21 $atom:o21
+    $bond:c3132  $atom:c31 $atom:c32
+    $bond:c3233  $atom:c32 $atom:c33
+    $bond:c3334  $atom:c33 $atom:c34
+    $bond:c3435  $atom:c34 $atom:c35
+    $bond:c3536  $atom:c35 $atom:c36
+    $bond:c3631  $atom:c36 $atom:c31
+    $bond:c31h31 $atom:c31 $atom:h31
+    $bond:c33h33 $atom:c33 $atom:h33
+    $bond:c34h34 $atom:c34 $atom:h34
+    $bond:c35o31 $atom:c35 $atom:o31
+    $bond:c36h36 $atom:c36 $atom:h36
+    $bond:c4142  $atom:c41 $atom:c42
+    $bond:c4243  $atom:c42 $atom:c43
+    $bond:c4344  $atom:c43 $atom:c44 #145R
+    $bond:c4445  $atom:c44 $atom:c45 #145R
+    $bond:c4546  $atom:c45 $atom:c46
+    $bond:c4641  $atom:c46 $atom:c41
+    $bond:c42h42 $atom:c42 $atom:h42
+    $bond:c43h43 $atom:c43 $atom:h43
+    $bond:c45h45 $atom:c45 $atom:h45
+    $bond:c46h46 $atom:c46 $atom:h46
+    $bond:b1 $atom:c14 $atom:c21
+    $bond:b2 $atom:c21 $atom:c32
+    $bond:b3 $atom:o31 $atom:c41
+  }
+}

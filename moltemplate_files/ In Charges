@@ -1,0 +1,2 @@
+        set type 991 charge -0.170 # O  - OS   | diphenyl ether OPLS/2020
+        set type 992 charge -0.115 # C  - CA   | Benzene C - 12 site OPLS/2020
