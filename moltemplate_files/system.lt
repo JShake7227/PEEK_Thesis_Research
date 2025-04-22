@@ -10,7 +10,7 @@ write_once("Data Boundary") {
 
 create_var {$mol} #Force monomers to have same molecule-ID
 
-monomers = new PEEK [1].move(20,0,0)
-                    [2].move(0,20,0)
+monomers = new PEEK [5].move(20,0,0)
+                    [5].move(0,20,0)
                     [5].move(0,0,20)
-                    .move(50,40,10) #.move(10,10,10)
+                    .move(10,10,10)
