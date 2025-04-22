@@ -1,0 +1,70 @@
+#--------------------------Variable Definitions--------------------------
+variable restartFname index 'Peek_Amorphous.bonded'
+variable systemName index 'Peek_Amorphous_Mechanical'
+variable potentialFile index "C:\LAMMPS 64-bit 2Aug2023 with GUI\Potentials\ffield.reax.lg"
+variable baseRunSteps equal 10000
+variable runSteps equal 10000
+
+#--------------------------Enable GPU acceleration--------------------------
+package gpu 0 gpuID 0 split 1.0  # (Force on GPU, neighbor list on CPU)
+suffix      	gpu                 # (Ensures GPU-accelerated styles are used)
+
+#suffix omp
+log 		log.defo
+#--------------------------Set up Restart Files --------------------------
+variable		restart_num equal "1000"
+#restart 		${restart_num} ${systemName} .* 
+
+#--------------------------Inititalization--------------------------
+
+include		system.in.init
+
+#--------------------------Atom Definition--------------------------
+print 		    '******Performing Sim run for ${systemName} mechanical properties*****'
+read_restart    ${restartFname}	
+#--------------------------Setting Section--------------------------
+set 			 	type 6 type 3 #Change reactive oxygen to standard oxygen for reaxxFF
+set 				type 7 type 1 #Change reactive carbon to standard aromatic carbon for reaxxFF
+#--------------------------Run Section--------------------------
+dump		    dumpeq1 all custom 1000 traj_eq1_defo.lammpstrj id mol type x y z
+fix 			thermo_data all print 1000 """{ "timestep": $(step), "stepsize":$(step), "temp": $(temp),"pe": $(pe), "ke": $(ke),"total_energy":$(etotal),"pressure":$(press),"volume":$(vol),"density":$(density),}""" file thermo_state.json screen no
+thermo_style 	custom step temp ke pe etotal press pxx pyy pzz vol density atoms
+thermo		    1000
+
+
+#--------------------------FF Transition 1: Lower Temp--------------------------
+timestep        1.0
+fix         	reduce_temp all nvt temp 300 0.3 1 
+run             $(v_baseRunSteps*1)
+unfix           reduce_temp
+
+#--------------------------FF Transition Block--------------------------
+#unfix *
+delete_bonds all multi
+#--------------------------FF Transition Block--------------------------
+
+#--------------------------FF Transition 2: Change FF--------------------------
+pair_style	reaxff NULL lgvdw yes
+kspace_style	none
+pair_coeff	* * ffield.reax.liu C H O C O O C
+
+#--------------------------FF Transition 3: Increase Temp--------------------------
+timestep        0.1
+thermo 1000
+
+fix  relaxbox all box/relax iso 0.0
+
+fix            1 all qeq/reaxff 1 0.0 5.0 1.0e-6 reaxff maxiter 300 #dual
+min_style 	cg
+minimize	1.0e-5	1.0e-7	100000	400000
+fix             increase_temp all nvt temp 0.3 300 100
+run             $(v_baseRunSteps*50)
+unfix           increase_temp
+
+#--------------------------Equilibration 1: NPT--------------------------
+timestep        0.1
+fix             eq1 all npt temp 300 300 1 iso 1.0 1.0 5
+run             $(v_baseRunSteps*20)
+unfix           eq1
+
+print 		'**************************************Completed Sim***************************************'

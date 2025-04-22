@@ -1,0 +1,96 @@
+#--------------------------Variable Definitions--------------------------
+variable fname index PEEK_output.txt
+variable simName index system.data
+variable systemName index Peek_Amorphous
+variable peekMass equal 2883.024
+variable targetDens equal 1.3
+variable numPlier equal 10
+variable runSteps equal ${numPlier}*1000
+variable replicateNum equal 1
+variable cubicReplicate equal ${replicateNum}^3
+variable finalBLength equal (${peekMass}*${cubicReplicate}/${targetDens})^(1/3)
+
+#package 	gpu 0
+
+#--------------------------Inititalization--------------------------
+
+include		system.in.init
+
+#--------------------------Atom Definition--------------------------
+print 		"******Performing Sim run for ${fname}*****"
+print 		"Total Molecules = ${cubicReplicate} oligomers"
+print		"Final Box Length in x,y, & z to achieve Target density of ${targetDens}g/cm^3 = ${finalBLength}"
+read_data	system.data extra/bond/per/atom 10000 extra/angle/per/atom 10000 extra/dihedral/per/atom 10000 extra/improper/per/atom 100 extra/special/per/atom 10000
+include 	system.in.charges
+#replicate 	${replicateNum} ${replicateNum} ${replicateNum} bbox/periodic
+
+#--------------------------Setting Section--------------------------
+
+include 	system.in.settings
+
+#--------------------------Set up Restart Files --------------------------
+variable restart_num equal 100000 
+variable restartMin index Peek_Amorphous.min 
+variable restartNve index Peek_Amorphous.nve 
+variable restartDensification index Peek_Amorphous.densification 
+variable restartBonded index Peek_Amorphous.bonded 
+
+restart ${restart_num} ${systemName}.* 
+#--------------------------Run Section--------------------------
+
+dump		dumpeq1 all custom 2500 traj_eq1_min.lammpstrj id mol type x y z
+thermo_style 	custom step temp pe etotal press pxx pyy pzz vol density atoms
+thermo		1000
+
+#--------------------------Equilibration 1: initial structure minimzation--------------------------
+min_style 	cg
+minimize	1.0e-5	1.0e-7	100000	400000
+write_restart  ${restartMin} 
+#undump 	dumpeq1
+
+velocity 		all create 300 3333333 rot yes dist gaussian 
+# Velocity followed by NVE--> NPT/NVT for relaxation 
+
+#--------------------------Equilibration 2: initial NVE--------------------------
+print			'Starting NVE'
+timestep 		1.0
+thermo			1000
+
+fix 			1 all nve
+run 			${runSteps}
+unfix 			1
+
+print			'End NVE'
+write_restart 	${restartNve}
+#--------------------------Equilibration 3: NPT eq--------------------------
+print			'Starting NVT'
+thermo			1000
+
+fix 			3 all nvt temp 300 300 100 #iso 0.0 0.0 100 
+run			400000
+
+
+#--------------------------Equilibration 4: Density eq--------------------------
+# Use NPT under deform 
+# Strain rate? 
+# Target Density: 1.30 g/cm3
+fix			4 all deform 1 x final 0 40 y final 0 40 z final 0 40
+run			1000000
+unfix 			4
+fix			5 all deform 1 x final 0 ${finalBLength} y final 0 ${finalBLength} z final 0 ${finalBLength}
+run			6000000
+unfix 			5
+print			'End NVT'
+
+write_restart 	${restartDensification}
+#--------------------------Equilibration 4: Density eq--------------------------
+print			'***************************************Starting Bond Formation***************************************'
+timestep 		0.1
+fix			6 all bond/create 100000 6 7 7 3 iparam 1 3 jparam 1 1 prob 0.5 53792 
+run 			2000000
+unfix			6
+unfix 		3
+print			'****************************************Bond Formation Complete***************************************'
+write_data 	system_after_eq1_min.data
+write_restart 	${restartBonded}
+print			'***************************************Completed Polyermization***************************************'
